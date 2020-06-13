@@ -31,114 +31,155 @@ namespace ogurowo_planting_automation
             //element_password.SendKeys("Kamil1995Pl");
             //element_password.SendKeys(Keys.Enter);
 
-            // PRZEJŚCIE NA FARME
-            driver.Navigate().GoToUrl("https://ogurowo.pl/farm.php?step=plantation");
+            //// PRZEJŚCIE NA FARME
+            //driver.Navigate().GoToUrl("https://ogurowo.pl/farm.php?step=plantation");
 
             // Znalezienie ilości i linków prowadzących na zbiory posiadanych ziół
             start:
-            int counter = 0;
-            //var elements_uprawy_link = driver.FindElements(By.LinkText("illani"));
-
-            //  TODO: [DONE] Rozwiązanie problemu innych nazw roślin -> zła kolejność id podczas podsumowania,
-            //         co przeklada sie na indeksacje i szukanie włąściwego odnośnika do zbierania
-            //         i przypisanej do niego ilości roślin.
-            var elements_uprawy_link = driver.FindElementsByXPath("//a[contains(text(), 'illani') or contains(text(), 'dynallca') or contains(text(),'illanias') or contains(text(), 'nutari')]");
-
-            List <Uprawa> Lista_upraw = new List<Uprawa>();
-            //Console.WriteLine($"Znaleziono {elements.Count} aktualnie hodowane zioła Ilani.");
-            foreach (var item in elements_uprawy_link) {
-                // Console.WriteLine(item.GetAttribute("href").ToString());
-                Lista_upraw.Add(new Uprawa() {
-                    Id = counter,
-                    Odnosnik = item.GetAttribute("href").ToString(),
-                    Nazwa = item.Text,
-                    Ilosc = 0,
-                    Wiek = 0,
-                });
-                counter++;
-            }
-
-            // //ul[2]/li[1]
-            counter = 0;
-            var elements_uprawy_data = driver.FindElements(By.XPath("//ul[2]/li"));
-            foreach (var item in elements_uprawy_data) { // wyszukuje "illani [ Ilość: 13 ] [ Wiek: 11 ] [ Młoda roślina ]"
-                //Console.WriteLine(item.Text);
-                String testing = item.Text;
-
-                //testing.IndexOf("Ilość");
-                //Console.WriteLine("index 'ilość' =" + testing.IndexOf("Ilość"));
-                //Console.WriteLine("Przycięty tekst =" + testing.Substring(testing.IndexOf("Ilość") + 7));
-                //Console.WriteLine("Przycięty tekst z obu stron =" + testing.Substring(testing.IndexOf("Ilość") + 7).Remove(3));
-                string ilosc = testing.Substring(testing.IndexOf("Ilość") + 7).Remove(2).Trim();
-                int ilosc_int = Convert.ToInt32(ilosc);
-
-                Lista_upraw.Find(id => id.Id == counter).Ilosc = ilosc_int;
-
-                //testing.IndexOf("Wiek");
-                //Console.WriteLine("index 'Wiek' =" + testing.IndexOf("Wiek"));
-                //Console.WriteLine("Przycięty tekst =" + testing.Substring(testing.IndexOf("Wiek") + 6));
-                //Console.WriteLine("Przycięty tekst z obu stron =" + testing.Substring(testing.IndexOf("Wiek") + 6).Remove(3));
-                string wiek = testing.Substring(testing.IndexOf("Wiek") + 6).Remove(2).Trim();
-                int wiek_int = Convert.ToInt32(wiek);
-
-                Lista_upraw.Find(id => id.Id == counter).Wiek = wiek_int;
-                counter++;
-            }
-
             Console.WriteLine("Udało się przejść na farme");
-            Console.WriteLine("Posiadasz na niej:"+Lista_upraw.Count+" upraw.");
+            var Lista_upraw = PobierzListeUpraw();
+            Console.WriteLine("Posiadasz na niej:" + Lista_upraw.Count + " upraw.");
             foreach (var uprawa in Lista_upraw) {
-                Console.WriteLine($"nr. {uprawa.Id+1}, {uprawa.Nazwa}, ilość: {uprawa.Ilosc}, wiek: {uprawa.Wiek}.");
+                Console.WriteLine($"nr. {uprawa.Id + 1}, {uprawa.Nazwa}, ilość: {uprawa.Ilosc}, wiek: {uprawa.Wiek}.");
             }
-
+            menuswitch:
             Console.WriteLine("Wybierz opcje:");
             Console.WriteLine("[1] Zmiana Miasta                        [W.I.P]");
             Console.WriteLine("[2] Sprawdz czy zbiory są możliwe        [OK]");
             Console.WriteLine("[3] Zasiej wszystko                      [OK]");
             Console.WriteLine("[4] Ile mam energi?                      [OK]");
             Console.WriteLine("[5] Zamknij                              [OK]");
-
             int answer = Convert.ToInt32(Console.ReadLine());
-            if (answer == 2) {
+            switch (answer) {
+                case 1:
+                    //TUTAJ ZMIENISZ MIASTO
+                    Console.WriteLine("Case 1");
+                    break;
+                case 2:
+                    mozliwe_do_zbioru();
+                    goto start;
+                //break;
+                case 3:
+                    Zasiewanie_pola();
+                    goto start;
+                //break;
+                case 4:
+                    Console.WriteLine($"Mam: {OdczytAktualnejEnergii()} energi");
+                    goto menuswitch;
+
+                case 5:
+                    driver.Quit();
+                    break;
+                default:
+                    Console.WriteLine("niepoprawny wybór opcji 1-5.");
+                    goto menuswitch;
+
+            }
+
+
+            List<Uprawa> PobierzListeUpraw() {
+                int counter = 0;
+                var elements_uprawy_link = driver.FindElementsByXPath("//a[contains(text(), 'illani') or contains(text(), 'dynallca') or contains(text(),'illanias') or contains(text(), 'nutari')]");
+
+                List<Uprawa> Lista_upraw = new List<Uprawa>();
+                //Console.WriteLine($"Znaleziono {elements.Count} aktualnie hodowane zioła Ilani.");
+                foreach (var item in elements_uprawy_link) {
+                    // Console.WriteLine(item.GetAttribute("href").ToString());
+                    Lista_upraw.Add(new Uprawa() {
+                        Id = counter,
+                        Odnosnik = item.GetAttribute("href").ToString(),
+                        Nazwa = item.Text,
+                        Ilosc = 0,
+                        Wiek = 0,
+                    });
+                    counter++;
+                }
+                //var elements_uprawy_link = driver.FindElements(By.LinkText("illani"));
+
+                //  TODO: [DONE] Rozwiązanie problemu innych nazw roślin -> zła kolejność id podczas podsumowania,
+                //         co przeklada sie na indeksacje i szukanie włąściwego odnośnika do zbierania
+                //         i przypisanej do niego ilości roślin.
+
+                // //ul[2]/li[1]
+                counter = 0;
+                var elements_uprawy_data = driver.FindElements(By.XPath("//ul[2]/li"));
+                foreach (var item in elements_uprawy_data) { // wyszukuje "illani [ Ilość: 13 ] [ Wiek: 11 ] [ Młoda roślina ]"
+                                                             //Console.WriteLine(item.Text);
+                    String testing = item.Text;
+
+                    //testing.IndexOf("Ilość");
+                    //Console.WriteLine("index 'ilość' =" + testing.IndexOf("Ilość"));
+                    //Console.WriteLine("Przycięty tekst =" + testing.Substring(testing.IndexOf("Ilość") + 7));
+                    //Console.WriteLine("Przycięty tekst z obu stron =" + testing.Substring(testing.IndexOf("Ilość") + 7).Remove(3));
+                    string ilosc = testing.Substring(testing.IndexOf("Ilość") + 7).Remove(2).Trim();
+                    int ilosc_int = Convert.ToInt32(ilosc);
+
+                    Lista_upraw.Find(id => id.Id == counter).Ilosc = ilosc_int;
+
+                    //testing.IndexOf("Wiek");
+                    //Console.WriteLine("index 'Wiek' =" + testing.IndexOf("Wiek"));
+                    //Console.WriteLine("Przycięty tekst =" + testing.Substring(testing.IndexOf("Wiek") + 6));
+                    //Console.WriteLine("Przycięty tekst z obu stron =" + testing.Substring(testing.IndexOf("Wiek") + 6).Remove(3));
+                    string wiek = testing.Substring(testing.IndexOf("Wiek") + 6).Remove(2).Trim();
+                    int wiek_int = Convert.ToInt32(wiek);
+
+                    Lista_upraw.Find(id => id.Id == counter).Wiek = wiek_int;
+                    counter++;
+                }
+                return Lista_upraw;
+            }
+
+            void mozliwe_do_zbioru() {
                 Console.WriteLine("Mozna zebrac nastepujace ziółka");
                 foreach (var uprawa in Lista_upraw.Where(wiek => wiek.Wiek > 18)) {
                     Console.WriteLine($"[ID: {uprawa.Id + 1}], {uprawa.Nazwa}, ilość: {uprawa.Ilosc}, wiek: {uprawa.Wiek}.");
                 }
-                Console.WriteLine("Wprowadz id ziela do zebrania.");
+                Console.WriteLine("Wprowadz id ziela do zebrania.[press 0 to back]");
                 int collect_by_id = Convert.ToInt32(Console.ReadLine());
-
-                Uprawa ziolo = Lista_upraw.Find(id => id.Id == collect_by_id - 1);
-                driver.Navigate().GoToUrl(ziolo.Odnosnik.ToString());
-                var element_input_amount = driver.FindElementByName("amount");
-                element_input_amount.SendKeys(ziolo.Ilosc.ToString());
-                element_input_amount.SendKeys(Keys.Enter);
-                Console.WriteLine($"Wykorzystana energia: {ziolo.Ilosc*1.5}");
-                Console.WriteLine($"Zebrałeś {ziolo.Ilosc.ToString()} zyskując przytym: EXP/ILOSC LISCI/DOSWIADCZENIE");
-                
-                goto start;
-            } else if (answer == 3) {
-                Zasiewanie_pola();
-            } else if (answer == 4) {
-                Console.WriteLine($"Mam: {OdczytAktualnejEnergii()} energi");
-            } 
-            else { 
-                driver.Quit(); 
+                if (collect_by_id != 0) {
+                    Uprawa ziolo = Lista_upraw.Find(id => id.Id == collect_by_id - 1);
+                    driver.Navigate().GoToUrl(ziolo.Odnosnik.ToString());
+                    var element_input_amount = driver.FindElementByName("amount");
+                    element_input_amount.SendKeys(ziolo.Ilosc.ToString());
+                    element_input_amount.SendKeys(Keys.Enter);
+                    Console.WriteLine($"Wykorzystana energia: {ziolo.Ilosc * 1.5}");
+                    Console.WriteLine($"Zebrałeś {ziolo.Ilosc.ToString()} zyskując przytym: EXP/ILOSC LISCI/DOSWIADCZENIE");
+                }
             }
 
-        void Zasiewanie_pola() {
-            //TODO: Wybieranie rodzaju rosliny 
-            //TODO: Sprawdzanie czy posiada się wystarczającą ilość nasion
-            //TODO: [DONE] Weryfikowanie czy nie zabraknie energii i sianie jest możliwe
+            void Zasiewanie_pola() {
+                //TODO: Wybieranie rodzaju rosliny aktualnie ustawiona sztywna wartosc - Dynallca
+                //wybranie konkretnego ziola: np Dynallca
 
-            Console.WriteLine($"Następuje automatyczne zasianie ostatnio uzywanej rosliny");
-            driver.Navigate().GoToUrl(zasiewanie_url);
-            var element_input_amount = driver.FindElementByName("amount");
-            // TODO: [DONE] Ustalenie pojemności farmy w celu jej ponownego zasiania
-            var elements_dostepne_pola = driver.FindElements(By.XPath("//td/ul/li/b"));
-            element_input_amount.SendKeys(elements_dostepne_pola[1].Text);
+                //TODO: [DONE] Sprawdzanie czy posiada się wystarczającą ilość nasion
 
+                //TODO: [DONE] Weryfikowanie czy nie zabraknie energii i sianie jest możliwe
+
+                Console.WriteLine($"Rozpoczęty proces zasiewania");
+                driver.Navigate().GoToUrl(zasiewanie_url);
+                checkSeedsAmout:
+                // TODO: [DONE] Ustalenie pojemności farmy w celu jej ponownego zasiania
+                var element_input_amount = driver.FindElementByName("amount");
+                var elements_dostepne_pola = driver.FindElements(By.XPath("//td/ul/li/b"));
+                element_input_amount.SendKeys(elements_dostepne_pola[1].Text);
+
+                //wybieranie z listy rozwijanej wybranego rodzaju nasion do zasadzenia
+                //wybranie konkretnego ziola: np Dynallca
+                string nasionko = "dynallca";
+                var select_seed_element = driver.FindElement(By.XPath($"//select/option[@value='{nasionko}_seeds']"));
+                select_seed_element.Click();
+                var posiadaneNasionka = select_seed_element.Text.Substring(select_seed_element.Text.IndexOf("(") + 1);
+                posiadaneNasionka = posiadaneNasionka.Substring(0, posiadaneNasionka.IndexOf(")"));
+                int posiadaneNasionka_int = Convert.ToInt32(posiadaneNasionka);
+                Console.WriteLine($"Posiadasz aktualnie {posiadaneNasionka} nasion {nasionko}");
+                int brakujacaLiczbaNasion = Convert.ToInt32(elements_dostepne_pola[1].Text) - posiadaneNasionka_int;
+                if (Convert.ToInt32(elements_dostepne_pola[1].Text) > posiadaneNasionka_int) {
+                    Console.WriteLine($"Niewystarczająca liczba nasionek. Brakuje {brakujacaLiczbaNasion}szt");
+                    suszenie_na_nasiona(brakujacaLiczbaNasion,nasionko);
+                    goto checkSeedsAmout;
+                } else 
             //sprawdzanie czy masz tyle energii
-            if((OdczytAktualnejEnergii() - (float.Parse(elements_dostepne_pola[1].Text)* 0.2)) > 0) {
+                if ((OdczytAktualnejEnergii() - (float.Parse(elements_dostepne_pola[1].Text)* 0.2)) > 0) {
                 element_input_amount.SendKeys(Keys.Enter);
                 Console.WriteLine($"Zasiano {elements_dostepne_pola[1].Text} ziol.");
                 Console.WriteLine($"Zuzyles {Convert.ToInt32(elements_dostepne_pola[1].Text)*0.2}, pozostało {OdczytAktualnejEnergii()} energii.");
@@ -146,17 +187,45 @@ namespace ogurowo_planting_automation
                     Console.WriteLine("Nie masz wystarczająco energii.");
                 }
         }
-
-        float OdczytAktualnejEnergii() {
+        
+            float OdczytAktualnejEnergii() {
         // TODO: [DONE] Pobieranie danych tekstowych zawierających ilośc posiadanej energii.
                 var element_tabela_z_danymi = driver.FindElement(By.XPath("/html[1]/body[1]/div[1]/table[1]/tbody[1]/tr[2]/td[1]/table[1]/tbody[1]/tr[1]/td[1]"));
                 string surowy_tekst_z_danymi = element_tabela_z_danymi.Text;
         // TODO: [DONE] Wyodrębnienie energii z tekstu.
                 string sformatowany_tekst_energia = surowy_tekst_z_danymi.Substring(surowy_tekst_z_danymi.IndexOf("Energia:") + 9).Trim();
                 string energia_txt = sformatowany_tekst_energia.Substring(0, sformatowany_tekst_energia.IndexOf("[i]")).Trim();
-                float energia = float.Parse(energia_txt.Replace(".",","));
-                Console.WriteLine($"TEST ->{energia}<-");
+                float energia = float.Parse(energia_txt.Replace(".",",")); 
                 return energia;
+            }
+
+            void suszenie_na_nasiona(int liczba_nasion,string nazwa_rosliny) {
+                //Przejscie do ogrodnika
+                driver.Navigate().GoToUrl(chatka_ogrodnika_url);
+                //wybranie roslin do wysuszenia
+                var select_seed_element = driver.FindElement(By.XPath($"//select/option[@value='{nazwa_rosliny.ToLower()}']"));
+                select_seed_element.Click();
+                //wprowadzenie ilosc nasion do pozyskania z założeniem 25% zwiększonego nakładu z racji niepowodzenia podczas suszenia
+                var element_input_amount = driver.FindElementByName("amount");
+                element_input_amount.SendKeys(Math.Round(liczba_nasion*1.25).ToString());
+                //sprawdzenie czy posiadamy wystarczajaca ilosc nasion ( 1 nasionko =  10nasion )
+                    //pobranie wartosci posiadanych ziol z wczesniejw ybranej listy
+                    var posiadaneZiola = select_seed_element.Text.Substring(select_seed_element.Text.IndexOf("(") + 1);
+                    posiadaneZiola = posiadaneZiola.Substring(posiadaneZiola.IndexOf(":")+2);
+                    int posiadaneZiola_int = Convert.ToInt32(posiadaneZiola);
+                    //porownanie z wartoscia ktora chcemy uzyskac
+                    if(Math.Round(liczba_nasion * 1.25)*10 > posiadaneZiola_int) {
+                        Console.WriteLine("Posiadasz za mało ziół zeby uzyskać z nich wystarczającą ilośc nasion.");
+                        Console.WriteLine("Chcesz sprubowac zasiac inne ziolka ? T/N");
+                        var answer = Console.ReadLine().ToLower();
+                        // Tutaj przekieruje na strone farmy z pytaniem któe ziolka chce sie sadzic
+                        driver.Navigate().GoToUrl(zasiewanie_url);
+                }
+                //zatwierdzenie przyciskiem wysusz
+                var element_btn_wysusz = driver.FindElementByXPath("//input[@value='Wysusz']");
+                element_btn_wysusz.Click();
+                //suszenie zielska do czasu uzykania wymaganej ( podanej w parametrze) liczby nasion
+                driver.Navigate().GoToUrl(zasiewanie_url);
             }
   
         }
@@ -172,7 +241,7 @@ namespace ogurowo_planting_automation
     }
 }
             /*
-             * TODO: suszenie zielska u ogrodnika
+             * TODO: [DONE] suszenie zielska u ogrodnika
              * TODO: sprawdzanie poziomu zielarstwa i notowanie aktualnych zbiorów
              * TODO: wystawianie / edytowanie aukcji na ryneczku lidla
              * TODO: sporządzanie notatek dot.zbiorów
