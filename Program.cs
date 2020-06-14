@@ -8,31 +8,32 @@ namespace ogurowo_planting_automation
 {
     public class Program {
         static void Main(string[] args) {
+            string nasionko = "dynallca";
             var driver = new ChromeDriver();
 
-            //TESTOWANIE
-            driver.Navigate().GoToUrl("file:///C:/Users/MrKom/Desktop/farma.html");
-            string zasiewanie_url = "file:///C:/Users/MrKom/Desktop/farma_sadzenie.html";
-            string chatka_ogrodnika_url = "file:///C:/Users/MrKom/Desktop/chatka_ogrodnika.html";
-            string bogactwo_url = "file:///C:/Users/MrKom/Desktop/bogactwo.html";
-            string statystyki_url = "file:///C:/Users/MrKom/Desktop/statystyki.html";
+            //////TESTOWANIE
+            ////driver.Navigate().GoToUrl("file:///C:/Users/MrKom/Desktop/farma.html");
+            ////string zasiewanie_url = "file:///C:/Users/MrKom/Desktop/farma_sadzenie.html";
+            ////string chatka_ogrodnika_url = "file:///C:/Users/MrKom/Desktop/chatka_ogrodnika.html";
+            ////string bogactwo_url = "file:///C:/Users/MrKom/Desktop/bogactwo.html";
+            ////string statystyki_url = "file:///C:/Users/MrKom/Desktop/statystyki.html";
 
 
-            ////////// ORGINALNY ZESTAW ODNOSNIKOW NA STRONE
-            //string zasiewanie_url = "https://ogurowo.pl/farm.php?step=plantation&action=sow";
-            //string chatka_ogrodnika_url = "https://ogurowo.pl/farm.php?step=house";
-            //string bogactwo_url ="https://ogurowo.pl/zloto.php";
-            //string statystyki_url ="https://ogurowo.pl/stats.php";
-            ////////// LOGOWANIE DO KONTA
-            //driver.Navigate().GoToUrl("https://ogurowo.pl/");
-            //var element_email = driver.FindElementByName("email");
-            //element_email.SendKeys("mr.komugiko@gmail.com");
-            //var element_password = driver.FindElementByName("pass");
-            //element_password.SendKeys("Kamil1995Pl");
-            //element_password.SendKeys(Keys.Enter);
+            //////// ORGINALNY ZESTAW ODNOSNIKOW NA STRONE
+            string zasiewanie_url = "https://ogurowo.pl/farm.php?step=plantation&action=sow";
+            string chatka_ogrodnika_url = "https://ogurowo.pl/farm.php?step=house";
+            string bogactwo_url = "https://ogurowo.pl/zloto.php";
+            string statystyki_url = "https://ogurowo.pl/stats.php";
+            //////// LOGOWANIE DO KONTA
+            driver.Navigate().GoToUrl("https://ogurowo.pl/");
+            var element_email = driver.FindElementByName("email");
+            element_email.SendKeys("mr.komugiko@gmail.com");
+            var element_password = driver.FindElementByName("pass");
+            element_password.SendKeys("*****************");
+            element_password.SendKeys(Keys.Enter);
 
-            //// PRZEJŚCIE NA FARME
-            //driver.Navigate().GoToUrl("https://ogurowo.pl/farm.php?step=plantation");
+            // PRZEJŚCIE NA FARME
+            driver.Navigate().GoToUrl("https://ogurowo.pl/farm.php?step=plantation");
 
             // Znalezienie ilości i linków prowadzących na zbiory posiadanych ziół
             start:
@@ -76,7 +77,7 @@ namespace ogurowo_planting_automation
 
             }
 
-
+            
             List<Uprawa> PobierzListeUpraw() {
                 int counter = 0;
                 var elements_uprawy_link = driver.FindElementsByXPath("//a[contains(text(), 'illani') or contains(text(), 'dynallca') or contains(text(),'illanias') or contains(text(), 'nutari')]");
@@ -131,7 +132,7 @@ namespace ogurowo_planting_automation
 
             void mozliwe_do_zbioru() {
                 Console.WriteLine("Mozna zebrac nastepujace ziółka");
-                foreach (var uprawa in Lista_upraw.Where(wiek => wiek.Wiek > 18)) {
+                foreach (var uprawa in Lista_upraw.Where(wiek => wiek.Wiek >=24)) {
                     Console.WriteLine($"[ID: {uprawa.Id + 1}], {uprawa.Nazwa}, ilość: {uprawa.Ilosc}, wiek: {uprawa.Wiek}.");
                 }
                 Console.WriteLine("Wprowadz id ziela do zebrania.[press 0 to back]");
@@ -165,7 +166,7 @@ namespace ogurowo_planting_automation
 
                 //wybieranie z listy rozwijanej wybranego rodzaju nasion do zasadzenia
                 //wybranie konkretnego ziola: np Dynallca
-                string nasionko = "dynallca";
+                 nasionko = nasionko;
                 var select_seed_element = driver.FindElement(By.XPath($"//select/option[@value='{nasionko}_seeds']"));
                 select_seed_element.Click();
                 var posiadaneNasionka = select_seed_element.Text.Substring(select_seed_element.Text.IndexOf("(") + 1);
@@ -207,25 +208,57 @@ namespace ogurowo_planting_automation
                 select_seed_element.Click();
                 //wprowadzenie ilosc nasion do pozyskania z założeniem 25% zwiększonego nakładu z racji niepowodzenia podczas suszenia
                 var element_input_amount = driver.FindElementByName("amount");
-                element_input_amount.SendKeys(Math.Round(liczba_nasion*1.25).ToString());
+                element_input_amount.SendKeys(Math.Round(liczba_nasion * 1.25).ToString());
                 //sprawdzenie czy posiadamy wystarczajaca ilosc nasion ( 1 nasionko =  10nasion )
-                    //pobranie wartosci posiadanych ziol z wczesniejw ybranej listy
-                    var posiadaneZiola = select_seed_element.Text.Substring(select_seed_element.Text.IndexOf("(") + 1);
-                    posiadaneZiola = posiadaneZiola.Substring(posiadaneZiola.IndexOf(":")+2);
-                    int posiadaneZiola_int = Convert.ToInt32(posiadaneZiola);
-                    //porownanie z wartoscia ktora chcemy uzyskac
-                    if(Math.Round(liczba_nasion * 1.25)*10 > posiadaneZiola_int) {
-                        Console.WriteLine("Posiadasz za mało ziół zeby uzyskać z nich wystarczającą ilośc nasion.");
-                        Console.WriteLine("Chcesz sprubowac zasiac inne ziolka ? T/N");
-                        var answer = Console.ReadLine().ToLower();
-                        // Tutaj przekieruje na strone farmy z pytaniem któe ziolka chce sie sadzic
-                        driver.Navigate().GoToUrl(zasiewanie_url);
+                //pobranie wartosci posiadanych ziol z wczesniejw ybranej listy
+                var posiadaneZiola = select_seed_element.Text.Substring(select_seed_element.Text.IndexOf("(") + 1);
+                posiadaneZiola = posiadaneZiola.Substring(posiadaneZiola.IndexOf(":") + 2);
+                int posiadaneZiola_int = Convert.ToInt32(posiadaneZiola);
+                //porownanie z wartoscia ktora chcemy uzyskac
+                if (Math.Round(liczba_nasion * 1.25) * 10 > posiadaneZiola_int) {
+                    Console.WriteLine("Posiadasz za mało ziół zeby uzyskać z nich wystarczającą ilośc nasion.");
+                    Console.WriteLine("Chcesz spróbowac zasiac inne ziolka ? T/N");
+                    var answer = Console.ReadLine().ToLower();
+                    if (answer == "t") {
+                        Console.WriteLine("Wybierz rosline ktora chcesz posadzic: \n1. Illani\n2. Illanias\n3. Nutari\n4. Dynallca.");
+                        int answer2 = Convert.ToInt32(Console.ReadLine());
+                        switch (answer2) {
+                            case 1:
+                                nasionko = "illani";
+                                Console.WriteLine($"Postanowiłeś zasadzić {nasionko}. ");
+                                suszenie_na_nasiona(liczba_nasion, nasionko);
+                                break;
+                            case 2:
+                                nasionko = "illanias";
+                                Console.WriteLine($"Postanowiłeś zasadzić {nasionko}. ");
+                                suszenie_na_nasiona(liczba_nasion, nasionko);
+                                break;
+                            case 3:
+                                nasionko = "nutari";
+                                Console.WriteLine($"Postanowiłeś zasadzić {nasionko}. ");
+                                suszenie_na_nasiona(liczba_nasion, nasionko);
+                                break;
+                            case 4:
+                                nasionko = "dynallca";
+                                Console.WriteLine($"Postanowiłeś zasadzić {nasionko}. ");
+                                suszenie_na_nasiona(liczba_nasion, nasionko);
+                                break;
+
+                            default:
+                                Console.WriteLine("niepoprawny wybór opcji 1-4.");
+                                break;
+                        }
+
+                    }
+                    // Tutaj przekieruje na strone farmy z pytaniem któe ziolka chce sie sadzic
+                    driver.Navigate().GoToUrl(zasiewanie_url);
+                } else {
+                    //zatwierdzenie przyciskiem wysusz
+                    var element_btn_wysusz = driver.FindElementByXPath("//input[@value='Wysusz']");
+                    element_btn_wysusz.Click();
+                    //suszenie zielska do czasu uzykania wymaganej ( podanej w parametrze) liczby nasion
+                    driver.Navigate().GoToUrl(zasiewanie_url);
                 }
-                //zatwierdzenie przyciskiem wysusz
-                var element_btn_wysusz = driver.FindElementByXPath("//input[@value='Wysusz']");
-                element_btn_wysusz.Click();
-                //suszenie zielska do czasu uzykania wymaganej ( podanej w parametrze) liczby nasion
-                driver.Navigate().GoToUrl(zasiewanie_url);
             }
   
         }
