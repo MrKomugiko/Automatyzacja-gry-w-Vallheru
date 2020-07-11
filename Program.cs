@@ -132,22 +132,43 @@ namespace ogurowo_planting_automation
 
             void mozliwe_do_zbioru() {
                 Console.WriteLine("Mozna zebrac nastepujace ziółka");
-                foreach (var uprawa in Lista_upraw.Where(wiek => wiek.Wiek >=24)) {
+                foreach (var uprawa in Lista_upraw.Where(wiek => wiek.Wiek >=23)) {
                     Console.WriteLine($"[ID: {uprawa.Id + 1}], {uprawa.Nazwa}, ilość: {uprawa.Ilosc}, wiek: {uprawa.Wiek}.");
                 }
-                Console.WriteLine("Wprowadz id ziela do zebrania.[press 0 to back]");
+                Console.WriteLine("Wprowadz id ziela do zebrania.[Wybierz \"0\" aby wrócić]");
                 int collect_by_id = Convert.ToInt32(Console.ReadLine());
                 if (collect_by_id != 0) {
                     Uprawa ziolo = Lista_upraw.Find(id => id.Id == collect_by_id - 1);
                     driver.Navigate().GoToUrl(ziolo.Odnosnik.ToString());
                     var element_input_amount = driver.FindElementByName("amount");
-                    element_input_amount.SendKeys(ziolo.Ilosc.ToString());
+
+                        int polaDoZebrania = 0;
+                        // Decyzja czy zbieramy wszystko czy tylko kilka sztuk:
+                        Console.WriteLine("Chcesz zebrać wszystkie posadzone uprawy ? t/n");
+                        var answer = Console.ReadLine();
+                        if(answer.ToUpper() == "T") {
+                            element_input_amount.SendKeys(ziolo.Ilosc.ToString());
+                        } else {
+                            Console.WriteLine("Podaj pożądaną liczbe pól któe chcesz zebrac:");
+                            polaDoZebrania = Convert.ToInt32(Console.ReadLine());
+                            element_input_amount.SendKeys(polaDoZebrania.ToString());
+                        }
+
                     element_input_amount.SendKeys(Keys.Enter);
-                    Console.WriteLine($"Wykorzystana energia: {ziolo.Ilosc * 1.5}");
-                    Console.WriteLine($"Zebrałeś {ziolo.Ilosc.ToString()} zyskując przytym: EXP/ILOSC LISCI/DOSWIADCZENIE");
+
+
+                    // Odczytanie wiadomości o powoodzeniu zbierania tj. liczba nasion exp i doswiadczenie zielarstwa
+                    var liczbaZebranychZiol = driver.FindElement(By.XPath("//*[@id='main']/table/tbody/tr[2]/td[2]/table/tbody/tr[2]/td/div/b[1]")).Text;
+                    var zdobytaUmiejetnoscZielarstwa = driver.FindElement(By.XPath("//*[@id='main']/table/tbody/tr[2]/td[2]/table/tbody/tr[2]/td/div/b[2]")).Text;
+                    var zdobytePunktyDoswiadczenia = driver.FindElement(By.XPath("//*[@id='main']/table/tbody/tr[2]/td[2]/table/tbody/tr[2]/td/div/b[3]")).Text;
+
+                    Console.WriteLine($"Wykorzystana energia: {polaDoZebrania * 1.5}");
+                    Console.WriteLine($"Zebrałeś {ziolo.Ilosc.ToString()} zyskując przytym: " +
+                        $"\n\t\t\t{liczbaZebranychZiol} ziół {ziolo.Nazwa}," +
+                        $"\n\t\t\t{zdobytaUmiejetnoscZielarstwa} umiejetnosci zielarstwa," +
+                        $"\n\t\t\t{zdobytePunktyDoswiadczenia} punktów doświadczenia. ");
                 }
             }
-
             void Zasiewanie_pola() {
                 //TODO: Wybieranie rodzaju rosliny aktualnie ustawiona sztywna wartosc - Dynallca
                 //wybranie konkretnego ziola: np Dynallca
@@ -211,8 +232,8 @@ namespace ogurowo_planting_automation
                 element_input_amount.SendKeys(Math.Round(liczba_nasion * 1.25).ToString());
                 //sprawdzenie czy posiadamy wystarczajaca ilosc nasion ( 1 nasionko =  10nasion )
                 //pobranie wartosci posiadanych ziol z wczesniejw ybranej listy
-                var posiadaneZiola = select_seed_element.Text.Substring(select_seed_element.Text.IndexOf("(") + 1);
-                posiadaneZiola = posiadaneZiola.Substring(posiadaneZiola.IndexOf(":") + 2);
+                var posiadaneZiola = select_seed_element.Text.Substring(select_seed_element.Text.IndexOf("(")+1);
+                posiadaneZiola = posiadaneZiola.Substring(0,posiadaneZiola.IndexOf(")"));
                 int posiadaneZiola_int = Convert.ToInt32(posiadaneZiola);
                 //porownanie z wartoscia ktora chcemy uzyskac
                 if (Math.Round(liczba_nasion * 1.25) * 10 > posiadaneZiola_int) {
