@@ -9,6 +9,7 @@ namespace ogurowo_planting_automation
     public class Program {
         static void Main(string[] args) {
             string nasionko = "dynallca";
+            Statistics TotalGains = new Statistics();
             var driver = new ChromeDriver();
 
             //////TESTOWANIE
@@ -29,7 +30,7 @@ namespace ogurowo_planting_automation
             var element_email = driver.FindElementByName("email");
             element_email.SendKeys("mr.komugiko@gmail.com");
             var element_password = driver.FindElementByName("pass");
-            element_password.SendKeys("*****************");
+            element_password.SendKeys("************");
             element_password.SendKeys(Keys.Enter);
 
             // PRZEJŚCIE NA FARME
@@ -77,7 +78,7 @@ namespace ogurowo_planting_automation
 
             }
 
-            
+
             List<Uprawa> PobierzListeUpraw() {
                 int counter = 0;
                 var elements_uprawy_link = driver.FindElementsByXPath("//a[contains(text(), 'illani') or contains(text(), 'dynallca') or contains(text(),'illanias') or contains(text(), 'nutari')]");
@@ -132,7 +133,7 @@ namespace ogurowo_planting_automation
 
             void mozliwe_do_zbioru() {
                 Console.WriteLine("Mozna zebrac nastepujace ziółka");
-                foreach (var uprawa in Lista_upraw.Where(wiek => wiek.Wiek >=23)) {
+                foreach (var uprawa in Lista_upraw.Where(wiek => wiek.Wiek >= 23)) {
                     Console.WriteLine($"[ID: {uprawa.Id + 1}], {uprawa.Nazwa}, ilość: {uprawa.Ilosc}, wiek: {uprawa.Wiek}.");
                 }
                 Console.WriteLine("Wprowadz id ziela do zebrania.[Wybierz \"0\" aby wrócić]");
@@ -142,17 +143,17 @@ namespace ogurowo_planting_automation
                     driver.Navigate().GoToUrl(ziolo.Odnosnik.ToString());
                     var element_input_amount = driver.FindElementByName("amount");
 
-                        int polaDoZebrania = 0;
-                        // Decyzja czy zbieramy wszystko czy tylko kilka sztuk:
-                        Console.WriteLine("Chcesz zebrać wszystkie posadzone uprawy ? t/n");
-                        var answer = Console.ReadLine();
-                        if(answer.ToUpper() == "T") {
-                            element_input_amount.SendKeys(ziolo.Ilosc.ToString());
-                        } else {
-                            Console.WriteLine("Podaj pożądaną liczbe pól któe chcesz zebrac:");
-                            polaDoZebrania = Convert.ToInt32(Console.ReadLine());
-                            element_input_amount.SendKeys(polaDoZebrania.ToString());
-                        }
+                    int polaDoZebrania = 0;
+                    // Decyzja czy zbieramy wszystko czy tylko kilka sztuk:
+                    Console.WriteLine("Chcesz zebrać wszystkie posadzone uprawy ? t/n");
+                    var answer = Console.ReadLine();
+                    if (answer.ToUpper() == "T") {
+                        element_input_amount.SendKeys(ziolo.Ilosc.ToString());
+                    } else {
+                        Console.WriteLine("Podaj pożądaną liczbe pól któe chcesz zebrac:");
+                        polaDoZebrania = Convert.ToInt32(Console.ReadLine());
+                        element_input_amount.SendKeys(polaDoZebrania.ToString());
+                    }
 
                     element_input_amount.SendKeys(Keys.Enter);
 
@@ -164,11 +165,20 @@ namespace ogurowo_planting_automation
 
                     Console.WriteLine($"Wykorzystana energia: {polaDoZebrania * 1.5}");
                     Console.WriteLine($"Zebrałeś {ziolo.Ilosc.ToString()} zyskując przytym: " +
-                        $"\n\t\t\t{liczbaZebranychZiol} ziół {ziolo.Nazwa}," +
-                        $"\n\t\t\t{zdobytaUmiejetnoscZielarstwa} umiejetnosci zielarstwa," +
-                        $"\n\t\t\t{zdobytePunktyDoswiadczenia} punktów doświadczenia. ");
+                        $"\n\t{liczbaZebranychZiol} ziół {ziolo.Nazwa}," +
+                        $"\n\t{zdobytaUmiejetnoscZielarstwa} umiejetnosci zielarstwa," +
+                        $"\n\t{zdobytePunktyDoswiadczenia} punktów doświadczenia. ");
+
+                    TotalGains.LiczbaPol += polaDoZebrania;
+                    TotalGains.ZiolaOtrzymane += Convert.ToInt32(liczbaZebranychZiol);
+                    TotalGains.ZielarstwoExp += float.Parse(zdobytaUmiejetnoscZielarstwa.Replace(".", ","));
+                    TotalGains.CharacterExp += Convert.ToInt32(zdobytePunktyDoswiadczenia);
+
+                   
+
                 }
             }
+
             void Zasiewanie_pola() {
                 //TODO: Wybieranie rodzaju rosliny aktualnie ustawiona sztywna wartosc - Dynallca
                 //wybranie konkretnego ziola: np Dynallca
@@ -183,11 +193,13 @@ namespace ogurowo_planting_automation
                 // TODO: [DONE] Ustalenie pojemności farmy w celu jej ponownego zasiania
                 var element_input_amount = driver.FindElementByName("amount");
                 var elements_dostepne_pola = driver.FindElements(By.XPath("//td/ul/li/b"));
+           
+                //********************* To jest tu chyba nie potrzebne, wywołuje sie przed głownym wywołaniem w warunku niżej ?
                 element_input_amount.SendKeys(elements_dostepne_pola[1].Text);
 
                 //wybieranie z listy rozwijanej wybranego rodzaju nasion do zasadzenia
                 //wybranie konkretnego ziola: np Dynallca
-                 nasionko = nasionko;
+                nasionko = nasionko;
                 var select_seed_element = driver.FindElement(By.XPath($"//select/option[@value='{nasionko}_seeds']"));
                 select_seed_element.Click();
                 var posiadaneNasionka = select_seed_element.Text.Substring(select_seed_element.Text.IndexOf("(") + 1);
@@ -197,31 +209,31 @@ namespace ogurowo_planting_automation
                 int brakujacaLiczbaNasion = Convert.ToInt32(elements_dostepne_pola[1].Text) - posiadaneNasionka_int;
                 if (Convert.ToInt32(elements_dostepne_pola[1].Text) > posiadaneNasionka_int) {
                     Console.WriteLine($"Niewystarczająca liczba nasionek. Brakuje {brakujacaLiczbaNasion}szt");
-                    suszenie_na_nasiona(brakujacaLiczbaNasion,nasionko);
+                    SuszenieNaNasiona(brakujacaLiczbaNasion, nasionko);
                     goto checkSeedsAmout;
-                } else 
-            //sprawdzanie czy masz tyle energii
-                if ((OdczytAktualnejEnergii() - (float.Parse(elements_dostepne_pola[1].Text)* 0.2)) > 0) {
-                element_input_amount.SendKeys(Keys.Enter);
-                Console.WriteLine($"Zasiano {elements_dostepne_pola[1].Text} ziol.");
-                Console.WriteLine($"Zuzyles {Convert.ToInt32(elements_dostepne_pola[1].Text)*0.2}, pozostało {OdczytAktualnejEnergii()} energii.");
+                } else
+                //sprawdzanie czy masz tyle energii
+                if ((OdczytAktualnejEnergii() - (float.Parse(elements_dostepne_pola[1].Text) * 0.2)) > 0) {
+                    Console.WriteLine($"Zasiano {elements_dostepne_pola[1].Text} ziol.");
+                    Console.WriteLine($"Zuzyles {Convert.ToInt32(elements_dostepne_pola[1].Text) * 0.2}, pozostało {OdczytAktualnejEnergii()} energii.");
+                    element_input_amount.SendKeys(Keys.Enter);
                 } else {
                     Console.WriteLine("Nie masz wystarczająco energii.");
                 }
-        }
-        
+            }
+
             float OdczytAktualnejEnergii() {
-        // TODO: [DONE] Pobieranie danych tekstowych zawierających ilośc posiadanej energii.
+                // TODO: [DONE] Pobieranie danych tekstowych zawierających ilośc posiadanej energii.
                 var element_tabela_z_danymi = driver.FindElement(By.XPath("/html[1]/body[1]/div[1]/table[1]/tbody[1]/tr[2]/td[1]/table[1]/tbody[1]/tr[1]/td[1]"));
                 string surowy_tekst_z_danymi = element_tabela_z_danymi.Text;
-        // TODO: [DONE] Wyodrębnienie energii z tekstu.
+                // TODO: [DONE] Wyodrębnienie energii z tekstu.
                 string sformatowany_tekst_energia = surowy_tekst_z_danymi.Substring(surowy_tekst_z_danymi.IndexOf("Energia:") + 9).Trim();
                 string energia_txt = sformatowany_tekst_energia.Substring(0, sformatowany_tekst_energia.IndexOf("[i]")).Trim();
-                float energia = float.Parse(energia_txt.Replace(".",",")); 
+                float energia = float.Parse(energia_txt.Replace(".", ","));
                 return energia;
             }
 
-            void suszenie_na_nasiona(int liczba_nasion,string nazwa_rosliny) {
+            void SuszenieNaNasiona(int liczba_nasion, string nazwa_rosliny) {
                 //Przejscie do ogrodnika
                 driver.Navigate().GoToUrl(chatka_ogrodnika_url);
                 //wybranie roslin do wysuszenia
@@ -232,8 +244,8 @@ namespace ogurowo_planting_automation
                 element_input_amount.SendKeys(Math.Round(liczba_nasion * 1.25).ToString());
                 //sprawdzenie czy posiadamy wystarczajaca ilosc nasion ( 1 nasionko =  10nasion )
                 //pobranie wartosci posiadanych ziol z wczesniejw ybranej listy
-                var posiadaneZiola = select_seed_element.Text.Substring(select_seed_element.Text.IndexOf("(")+1);
-                posiadaneZiola = posiadaneZiola.Substring(0,posiadaneZiola.IndexOf(")"));
+                var posiadaneZiola = select_seed_element.Text.Substring(select_seed_element.Text.IndexOf("(") + 1);
+                posiadaneZiola = posiadaneZiola.Substring(0, posiadaneZiola.IndexOf(")"));
                 int posiadaneZiola_int = Convert.ToInt32(posiadaneZiola);
                 //porownanie z wartoscia ktora chcemy uzyskac
                 if (Math.Round(liczba_nasion * 1.25) * 10 > posiadaneZiola_int) {
@@ -247,22 +259,22 @@ namespace ogurowo_planting_automation
                             case 1:
                                 nasionko = "illani";
                                 Console.WriteLine($"Postanowiłeś zasadzić {nasionko}. ");
-                                suszenie_na_nasiona(liczba_nasion, nasionko);
+                                SuszenieNaNasiona(liczba_nasion, nasionko);
                                 break;
                             case 2:
                                 nasionko = "illanias";
                                 Console.WriteLine($"Postanowiłeś zasadzić {nasionko}. ");
-                                suszenie_na_nasiona(liczba_nasion, nasionko);
+                                SuszenieNaNasiona(liczba_nasion, nasionko);
                                 break;
                             case 3:
                                 nasionko = "nutari";
                                 Console.WriteLine($"Postanowiłeś zasadzić {nasionko}. ");
-                                suszenie_na_nasiona(liczba_nasion, nasionko);
+                                SuszenieNaNasiona(liczba_nasion, nasionko);
                                 break;
                             case 4:
                                 nasionko = "dynallca";
                                 Console.WriteLine($"Postanowiłeś zasadzić {nasionko}. ");
-                                suszenie_na_nasiona(liczba_nasion, nasionko);
+                                SuszenieNaNasiona(liczba_nasion, nasionko);
                                 break;
 
                             default:
@@ -281,7 +293,7 @@ namespace ogurowo_planting_automation
                     driver.Navigate().GoToUrl(zasiewanie_url);
                 }
             }
-  
+
         }
         public class Uprawa {
 
@@ -290,6 +302,19 @@ namespace ogurowo_planting_automation
             public String Nazwa { get; set; }
             public int? Wiek { get; set; }
             public int? Ilosc { get; set; }
+
+        }
+
+        // Przechowywanie podsumowania zebranych przedmiotow/doswiadczenia.
+        public class Statistics {
+            // Ilość ogarniętych pól.
+            public int LiczbaPol { get; set; }
+            // Ilość otrzymanych zioł, bez znaczenia na rodzaj rośliny.
+            public int ZiolaOtrzymane { get; set; }
+            // Doświadczenie umiejętności zielarstwo.
+            public float ZielarstwoExp { get; set; }
+            // Doświadczenie gracza.
+            public int CharacterExp { get; set; }            
 
         }
     }
